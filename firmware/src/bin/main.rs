@@ -9,8 +9,9 @@
 
 use bt_hci::controller::ExternalController;
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
+use esp_hal::delay::Delay;
+use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
@@ -84,14 +85,22 @@ async fn main(spawner: Spawner) -> ! {
         HostResources::new();
     let _stack = trouble_host::new(ble_controller, &mut resources);
 
+    // Setup LED on GPIO8
+    let mut led = Output::new(peripherals.GPIO8, Level::High, OutputConfig::default());
+    let led_delay = Delay::new();
+
     // TODO: Spawn some tasks
     let _ = spawner;
 
     println!("init::Starting main loop!\r");
 
     loop {
-        println!("Hello world!\r");
-        Timer::after(Duration::from_secs(1)).await;
+        println!("LED low\r");
+        led.set_low();
+        led_delay.delay_millis(1000);
+        println!("LED high\r");
+        led.set_high();
+        led_delay.delay_millis(1000);
     }
 
     // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples

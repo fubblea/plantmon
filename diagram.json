@@ -1,19 +1,24 @@
 {
-    "version": 1,
-    "author": "Ajay Anand [fubblea]",
-    "editor": "wokwi",
-    "parts": [
-      {
-        "type": "board-esp32-c6-devkitc-1",
-        "id": "esp",
-        "top": 0.59,
-        "left": 0.67,
-        "attrs": { "flashSize": "16", "serialInterface": "USB_SERIAL_JTAG" }
-      }
-    ],
-    "connections": [
-    ],
-    "serialMonitor": { 
-        "convertEol": true 
+  "version": 1,
+  "author": "Ajay Anand [fubblea]",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-c6-devkitc-1",
+      "id": "esp",
+      "top": 0.59,
+      "left": 0.67,
+      "attrs": { "flashSize": "16", "serialInterface": "USB_SERIAL_JTAG" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 15.6,
+      "left": -111.4,
+      "attrs": { "color": "red" }
     }
-  }
+  ],
+  "connections": [ [ "led1:A", "esp:8", "green", [ "v0" ] ], [ "led1:C", "esp:GND.1", "green", [ "v0" ] ] ],
+  "serialMonitor": { "convertEol": true },
+  "dependencies": {}
+}
