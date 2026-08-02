@@ -33,7 +33,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 #[esp_rtos::main]
 async fn main(spawner: Spawner) -> ! {
     // generator version: 1.3.0
-    // generator parameters: --chip esp32c5 -o ci -o vscode -o stable-x86_64-pc-windows-msvc -o esp32c5-wroom-1 -o probe-rs -o defmt -o panic-rtt-target -o embedded-test -o alloc -o unstable-hal -o wifi -o embassy -o ble-trouble
+    // generator parameters: --chip esp32c6 -o esp32c6-wroom-1 -o unstable-hal -o alloc -o wifi -o embassy -o ble-trouble -o probe-rs -o defmt -o panic-rtt-target -o embedded-test -o wokwi -o vscode -o stable-x86_64-pc-windows-msvc
 
     rtt_target::rtt_init_defmt!();
 
@@ -42,13 +42,19 @@ async fn main(spawner: Spawner) -> ! {
 
     // The following pins are used to bootstrap the chip. They are available
     // for use, but check the datasheet of the module for more information on them.
-    // - GPIO2
-    // - GPIO3
-    // - GPIO7
-    // - GPIO25
-    // - GPIO26
-    // - GPIO27
-    // - GPIO28
+    // - GPIO4
+    // - GPIO5
+    // - GPIO8
+    // - GPIO9
+    // - GPIO15
+    // These GPIO pins are in use by some feature of the module and should not be used.
+    let _ = peripherals.GPIO24;
+    let _ = peripherals.GPIO25;
+    let _ = peripherals.GPIO26;
+    let _ = peripherals.GPIO27;
+    let _ = peripherals.GPIO28;
+    let _ = peripherals.GPIO29;
+    let _ = peripherals.GPIO30;
 
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 65536);
     // COEX needs more RAM - so we've added some more

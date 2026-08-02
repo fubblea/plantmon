@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+gdbServerPort = 3333
+elf = "firmware/target/riscv32imac-unknown-none-elf/release/firmware"
+firmware = "firmware/target/riscv32imac-unknown-none-elf/release/firmware"

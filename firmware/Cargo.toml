@@ -17,18 +17,18 @@ name    = "hello_test"
 test = false
 
 [dependencies]
-esp-hal = { version = "~1.1.0", features = ["defmt", "esp32c5", "unstable"] }
+esp-hal = { version = "~1.1.0", features = ["defmt", "esp32c6", "unstable"] }
 
 esp-rtos = { version = "0.3.0", features = [
   "defmt",
   "embassy",
   "esp-alloc",
   "esp-radio",
-  "esp32c5",
+  "esp32c6",
 ] }
 
 defmt                  = "1.0.1"
-esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32c5"] }
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32c6"] }
 
 embassy-net = { version = "0.9.1", features = [
   "defmt",
@@ -51,7 +51,7 @@ esp-radio = { version = "0.18.0", features = [
   "coex",
   "defmt",
   "esp-alloc",
-  "esp32c5",
+  "esp32c6",
   "unstable",
   "wifi",
 ] }
