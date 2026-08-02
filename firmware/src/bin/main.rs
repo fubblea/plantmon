@@ -8,17 +8,18 @@
 #![deny(clippy::large_stack_frames)]
 
 use bt_hci::controller::ExternalController;
-use defmt::info;
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
+use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
 use panic_rtt_target as _;
 use trouble_host::prelude::*;
 
 extern crate alloc;
 
+// BLE host resources configuration
 const CONNECTIONS_MAX: usize = 1;
 const L2CAP_CHANNELS_MAX: usize = 1;
 
@@ -37,6 +38,7 @@ async fn main(spawner: Spawner) -> ! {
 
     rtt_target::rtt_init_defmt!();
 
+    // Initialize the peripherals and the system clock
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -56,17 +58,22 @@ async fn main(spawner: Spawner) -> ! {
     let _ = peripherals.GPIO29;
     let _ = peripherals.GPIO30;
 
+    println!("---------------------\r");
+
+    // Creates heap memory regions. Reclaims memory from the booloader for heap.
     esp_alloc::heap_allocator!(#[esp_hal::ram(reclaimed)] size: 65536);
     // COEX needs more RAM - so we've added some more
     esp_alloc::heap_allocator!(size: 64 * 1024);
 
+    // Start the RTOS scheduler. This will start the main task and never return.
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     let sw_interrupt =
         esp_hal::interrupt::software::SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, sw_interrupt.software_interrupt0);
 
-    info!("Embassy initialized!");
+    println!("init::Embassy initialized!\r");
 
+    // Initialize the Wi-Fi controller and interfaces
     let (mut _wifi_controller, _interfaces) =
         esp_radio::wifi::new(peripherals.WIFI, Default::default())
             .expect("Failed to initialize Wi-Fi controller");
@@ -80,8 +87,10 @@ async fn main(spawner: Spawner) -> ! {
     // TODO: Spawn some tasks
     let _ = spawner;
 
+    println!("init::Starting main loop!\r");
+
     loop {
-        info!("Hello world!");
+        println!("Hello world!\r");
         Timer::after(Duration::from_secs(1)).await;
     }
 

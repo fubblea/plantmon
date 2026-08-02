@@ -8,15 +8,12 @@
         "id": "esp",
         "top": 0.59,
         "left": 0.67,
-        "attrs": { "flashSize": "16" }
+        "attrs": { "flashSize": "16", "serialInterface": "USB_SERIAL_JTAG" }
       }
     ],
     "connections": [
-      [ "esp:TX", "$serialMonitor:RX", "", [] ],
-      [ "esp:RX", "$serialMonitor:TX", "", [] ]
     ],
     "serialMonitor": { 
-        "display": "terminal",
         "convertEol": true 
     }
   }
