@@ -9,16 +9,36 @@
 
 use bt_hci::controller::ExternalController;
 use embassy_executor::Spawner;
+use esp_backtrace as _;
+use esp_hal::analog::adc;
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
 use esp_hal::gpio::{Level, Output, OutputConfig};
+use esp_hal::i2c::master::Config as I2cConfig; // for convenience, importing as alias
+use esp_hal::i2c::master::I2c;
+use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 use esp_radio::ble::controller::BleConnector;
-use panic_rtt_target as _;
+
+use embedded_graphics::{
+    mono_font::{MonoTextStyleBuilder, ascii::FONT_6X10},
+    pixelcolor::BinaryColor,
+    prelude::Point,
+    prelude::*,
+    text::{Baseline, Text},
+};
+use ssd1306::{I2CDisplayInterface, Ssd1306Async, prelude::*};
+
+use micromath::F32Ext;
 use trouble_host::prelude::*;
 
 extern crate alloc;
+
+#[panic_handler]
+fn panic(_: &core::panic::PanicInfo) -> ! {
+    loop {}
+}
 
 // BLE host resources configuration
 const CONNECTIONS_MAX: usize = 1;
@@ -34,9 +54,6 @@ esp_bootloader_esp_idf::esp_app_desc!();
 )]
 #[esp_rtos::main]
 async fn main(spawner: Spawner) -> ! {
-    // generator version: 1.3.0
-    // generator parameters: --chip esp32c6 -o esp32c6-wroom-1 -o unstable-hal -o alloc -o wifi -o embassy -o ble-trouble -o probe-rs -o defmt -o panic-rtt-target -o embedded-test -o wokwi -o vscode -o stable-x86_64-pc-windows-msvc
-
     rtt_target::rtt_init_defmt!();
 
     // Initialize the peripherals and the system clock
@@ -85,9 +102,38 @@ async fn main(spawner: Spawner) -> ! {
         HostResources::new();
     let _stack = trouble_host::new(ble_controller, &mut resources);
 
+    println!("init::WiFi and BLE initialized!\r");
+
     // Setup LED on GPIO8
     let mut led = Output::new(peripherals.GPIO8, Level::High, OutputConfig::default());
     let led_delay = Delay::new();
+
+    println!("init::LED initialized!\r");
+
+    // Setup temp sensor on GPIO4
+    let mut adc1_config = adc::AdcConfig::new();
+    let mut adc1_pin = adc1_config.enable_pin(peripherals.GPIO2, adc::Attenuation::_11dB);
+    let mut temp_sensor = adc::Adc::new(peripherals.ADC1, adc1_config);
+    const TEMP_SENSOR_BETA: f32 = 3950.0; // Beta value for the thermistor
+
+    println!("init::Temp sensor initialized!\r");
+
+    // Setup OLED on I2C (GPI18=SDA, GPI19=SCL)
+    let i2c_bus = I2c::new(
+        peripherals.I2C0,
+        I2cConfig::default().with_frequency(Rate::from_khz(400)),
+    )
+    .unwrap()
+    .with_sda(peripherals.GPIO18)
+    .with_scl(peripherals.GPIO19)
+    .into_async();
+    let interface = I2CDisplayInterface::new(i2c_bus);
+    // initialize the display
+    let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().await.unwrap();
+
+    println!("init::Display initialized!\r");
 
     // TODO: Spawn some tasks
     let _ = spawner;
@@ -95,13 +141,40 @@ async fn main(spawner: Spawner) -> ! {
     println!("init::Starting main loop!\r");
 
     loop {
+        println!("Updating OLED display\r");
+        let text_style = MonoTextStyleBuilder::new()
+            .font(&FONT_6X10)
+            .text_color(BinaryColor::On)
+            .build();
+        Text::with_baseline("Hello, Ajay!", Point::new(0, 16), text_style, Baseline::Top)
+            .draw(&mut display)
+            .unwrap();
+        display.flush().await.unwrap();
+
         println!("LED low\r");
         led.set_low();
+
+        let temp_raw = nb::block!(temp_sensor.read_oneshot(&mut adc1_pin)).unwrap();
+        let temp_celsius = 1.0
+            / ((1.0 / (1023.0 / temp_raw as f32 - 1.0)).log(10.0) / TEMP_SENSOR_BETA
+                + 1.0 / 298.15)
+            - 273.15;
+        println!("Temperature: {:.2} °C\r", temp_celsius);
+
         led_delay.delay_millis(1000);
+
+        println!("Updating OLED display\r");
+        let text_style = MonoTextStyleBuilder::new()
+            .font(&FONT_6X10)
+            .text_color(BinaryColor::On)
+            .build();
+        Text::with_baseline("Hello, Rust!", Point::new(0, 16), text_style, Baseline::Top)
+            .draw(&mut display)
+            .unwrap();
+        display.flush().await.unwrap();
+
         println!("LED high\r");
         led.set_high();
         led_delay.delay_millis(1000);
     }
-
-    // for inspiration have a look at the examples at https://github.com/esp-rs/esp-hal/tree/esp-hal-v1.1.0/examples
 }

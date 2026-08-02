@@ -6,19 +6,45 @@
     {
       "type": "board-esp32-c6-devkitc-1",
       "id": "esp",
-      "top": 0.59,
-      "left": 0.67,
+      "top": 5.29,
+      "left": 42.52,
       "attrs": { "flashSize": "16", "serialInterface": "USB_SERIAL_JTAG" }
+    },
+    {
+      "type": "wokwi-ntc-temperature-sensor",
+      "id": "ntc1",
+      "top": 251.8,
+      "left": 48,
+      "rotate": 180,
+      "attrs": {}
     },
     {
       "type": "wokwi-led",
       "id": "led1",
-      "top": 15.6,
-      "left": -111.4,
+      "top": 133.6,
+      "left": -171.4,
+      "rotate": 270,
       "attrs": { "color": "red" }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 89.54,
+      "left": 230.63,
+      "attrs": { "i2cAddress": "0x3c" }
     }
   ],
-  "connections": [ [ "led1:A", "esp:8", "green", [ "v0" ] ], [ "led1:C", "esp:GND.1", "green", [ "v0" ] ] ],
+  "connections": [
+    [ "led1:A", "esp:8", "green", [ "v0" ] ],
+    [ "led1:C", "esp:GND.1", "green", [ "v0" ] ],
+    [ "ntc1:GND", "esp:GND.1", "black", [ "h-115.2", "v-124.8" ] ],
+    [ "ntc1:VCC", "esp:5V", "red", [ "h-28.8", "v-124.8", "h28.8" ] ],
+    [ "ntc1:OUT", "esp:4", "green", [ "h-67.2", "v-220.7" ] ],
+    [ "esp:5V", "oled1:VCC", "red", [ "h-28.8", "v-211.2", "h259.2", "v19.2" ] ],
+    [ "esp:GND.2", "oled1:GND", "black", [ "h75.7", "v-96", "h57.6" ] ],
+    [ "oled1:SCL", "esp:19", "green", [ "v-28.8", "h-86.1", "v48" ] ],
+    [ "oled1:SDA", "esp:18", "green", [ "v-38.4", "h-105.53", "v67.2" ] ]
+  ],
   "serialMonitor": { "convertEol": true },
   "dependencies": {}
 }
