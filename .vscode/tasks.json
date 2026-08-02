@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Build Firmware",
+      "type": "shell",
+      "command": "make bf",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "2. Start Wokwi Extension Simulator",
+      "type": "process",
+      "command": "${command:wokwi-vscode.start}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build and Simulate",
+      "type": "shell",
+      "dependsOrder": "sequence",
+      "dependsOn": ["1. Build Firmware", "2. Start Wokwi Extension Simulator"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
