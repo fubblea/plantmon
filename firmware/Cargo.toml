@@ -73,7 +73,11 @@ trouble-host = { version = "0.6.0", features = ["gatt"] }
 critical-section = "1.2.0"
 static_cell = "2.1.1"
 esp-println = { version = "0.17.0", features = ["esp32c6"] }
-esp-backtrace = { version = "0.19.0", features = ["esp32c6", "defmt"] }
+esp-backtrace = { version = "0.19.0", features = [
+  "esp32c6",
+  "defmt",
+  "panic-handler",
+] }
 micromath = "2.1.0"
 nb = "1.1.0"
 ssd1306 = { version = "0.10.0", features = ["async"] }

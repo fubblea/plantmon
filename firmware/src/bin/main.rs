@@ -35,11 +35,6 @@ use trouble_host::prelude::*;
 
 extern crate alloc;
 
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
 // BLE host resources configuration
 const CONNECTIONS_MAX: usize = 1;
 const L2CAP_CHANNELS_MAX: usize = 1;
@@ -127,6 +122,7 @@ async fn main(spawner: Spawner) -> ! {
     .with_sda(peripherals.GPIO18)
     .with_scl(peripherals.GPIO19)
     .into_async();
+
     let interface = I2CDisplayInterface::new(i2c_bus);
     // initialize the display
     let mut display = Ssd1306Async::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
