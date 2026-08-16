@@ -11,12 +11,13 @@ use esp_backtrace as _;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-// 1. Import Flex instead of Output/DriveMode
-use esp_hal::gpio::Flex;
+use esp_hal::gpio::{Flex, InputConfig, Pull};
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 
 use embedded_dht_rs::dht22::Dht22;
+
+mod components;
 
 extern crate alloc;
 
@@ -50,13 +51,20 @@ async fn main(spawner: Spawner) -> ! {
     // ---------------------------------------------------------
     // SENSOR 3: DHT22 on GPIO 18
     // ---------------------------------------------------------
-    // 2. Use Flex::new() to create a bidirectional pin
-    let dht_pin = Flex::new(peripherals.GPIO18);
+    let mut dht_pin = Flex::new(peripherals.GPIO18);
+    let dht_config = InputConfig::default().with_pull(Pull::None);
+    dht_pin.set_input_enable(true);
+    dht_pin.set_output_enable(true);
+    dht_pin.apply_input_config(&dht_config);
+    dht_pin.set_high();
 
     let mut dht22 = Dht22::new(dht_pin, delay);
 
     // TODO: Spawn some tasks
     let _ = spawner;
+
+    // Wait to let the sensors start
+    delay.delay_millis(2000);
 
     println!("Sensors Configured! Starting main loop...\r");
 
