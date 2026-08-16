@@ -11,7 +11,7 @@ use esp_backtrace as _;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-use esp_hal::gpio::{Flex, InputConfig, Pull};
+use esp_hal::gpio::{DriveMode, Flex, InputConfig, OutputConfig, Pull};
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 
@@ -50,10 +50,14 @@ async fn main(spawner: Spawner) -> ! {
     // SENSOR 3: DHT22 on GPIO 18
     // ---------------------------------------------------------
     let mut dht_pin = Flex::new(peripherals.GPIO18);
-    let dht_config = InputConfig::default().with_pull(Pull::None);
+    dht_pin.apply_output_config(
+        &OutputConfig::default()
+            .with_drive_mode(DriveMode::OpenDrain)
+            .with_pull(Pull::Up),
+    );
+    dht_pin.apply_input_config(&InputConfig::default().with_pull(Pull::Up));
     dht_pin.set_input_enable(true);
     dht_pin.set_output_enable(true);
-    dht_pin.apply_input_config(&dht_config);
     dht_pin.set_high();
 
     let mut dht22 = Dht22::new(dht_pin, delay);
@@ -89,6 +93,6 @@ async fn main(spawner: Spawner) -> ! {
         println!("Temperature: {:.1}°C\r", temp_c);
         println!("Humidity: {:.1}%\r", humidity);
 
-        delay.delay_millis(500);
+        delay.delay_millis(2000); // DHT22 minimum period
     }
 }
