@@ -626,6 +626,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-dht-rs"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29effeefb22e6d214e9ab294123ff3fe3578159679cde5591c82c272c8ae53f"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
 name = "embedded-graphics"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1270,6 +1279,7 @@ dependencies = [
  "embassy-executor",
  "embassy-net",
  "embassy-time",
+ "embedded-dht-rs",
  "embedded-graphics",
  "embedded-io 0.7.1",
  "embedded-io-async 0.7.0",
