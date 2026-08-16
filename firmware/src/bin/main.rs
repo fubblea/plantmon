@@ -17,8 +17,6 @@ use esp_println::println;
 
 use embedded_dht_rs::dht22::Dht22;
 
-mod components;
-
 extern crate alloc;
 
 esp_bootloader_esp_idf::esp_app_desc!();
