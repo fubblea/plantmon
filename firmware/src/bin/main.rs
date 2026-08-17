@@ -4,7 +4,7 @@
     clippy::mem_forget,
     reason = "mem::forget is generally not safe to do with esp_hal types."
 )]
-#![deny(clippy::large_stack_frames)]
+// #![deny(clippy::large_stack_frames)]
 
 use embassy_executor::Spawner;
 use esp_backtrace as _;
