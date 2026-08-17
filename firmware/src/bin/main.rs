@@ -8,16 +8,22 @@
 
 use embassy_executor::Spawner;
 use esp_backtrace as _;
-use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
+use esp_hal::analog::adc::{Adc, AdcConfig};
 use esp_hal::clock::CpuClock;
 use esp_hal::delay::Delay;
-use esp_hal::gpio::{DriveMode, Flex, InputConfig, OutputConfig, Pull};
 use esp_hal::timer::timg::TimerGroup;
 use esp_println::println;
 
-use embedded_dht_rs::dht22::Dht22;
+use micromath::F32;
+
+use crate::components::dht::Dht;
+use crate::components::ldr::Ldr;
+use crate::components::soil::SoilMoisture;
+use crate::components::{Adc1Component, GpioComponent};
 
 extern crate alloc;
+
+mod components;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -42,25 +48,15 @@ async fn main(spawner: Spawner) -> ! {
     // SENSOR 1 & 2: LDR and Soil Moisture on ADC
     // ---------------------------------------------------------
     let mut adc1_config = AdcConfig::new();
-    let mut ldr_pin = adc1_config.enable_pin(peripherals.GPIO5, Attenuation::_11dB);
-    let mut moisture_pin = adc1_config.enable_pin(peripherals.GPIO6, Attenuation::_11dB);
+    let mut ldr = Ldr::from_pin_and_adc1(peripherals.GPIO5, &mut adc1_config);
+    let mut moisture = SoilMoisture::from_pin_and_adc1(peripherals.GPIO6, &mut adc1_config);
     let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
     // ---------------------------------------------------------
     // SENSOR 3: DHT22 on GPIO 18
     // ---------------------------------------------------------
-    let mut dht_pin = Flex::new(peripherals.GPIO18);
-    dht_pin.apply_output_config(
-        &OutputConfig::default()
-            .with_drive_mode(DriveMode::OpenDrain)
-            .with_pull(Pull::Up),
-    );
-    dht_pin.apply_input_config(&InputConfig::default().with_pull(Pull::Up));
-    dht_pin.set_input_enable(true);
-    dht_pin.set_output_enable(true);
-    dht_pin.set_high();
-
-    let mut dht22 = Dht22::new(dht_pin, delay);
+    let mut dht_delay = Delay::new();
+    let mut dht = Dht::from_pin_and_delay(peripherals.GPIO18, &mut dht_delay);
 
     // TODO: Spawn some tasks
     let _ = spawner;
@@ -71,27 +67,54 @@ async fn main(spawner: Spawner) -> ! {
     println!("Sensors Configured! Starting main loop...\r");
 
     loop {
-        let ldr_raw: u16 = nb::block!(adc1.read_oneshot(&mut ldr_pin)).unwrap_or(0);
-        let moisture_raw: u16 = nb::block!(adc1.read_oneshot(&mut moisture_pin)).unwrap_or(0);
-
-        let mut temp_c = 0.0;
-        let mut humidity = 0.0;
-
-        match dht22.read() {
-            Ok(reading) => {
-                temp_c = reading.temperature;
-                humidity = reading.humidity;
+        let ldr_lux: F32 = match ldr.read(&mut adc1) {
+            Ok(value) => value.into(),
+            Err(e) => {
+                match e {
+                    components::error::ComponentError::ReadError(msg) => {
+                        println!("LRD RearError, fallback to -1.0: {}", msg);
+                    }
+                    components::error::ComponentError::AdcConversionError(msg) => {
+                        println!("LRD AdcConversionError, fallback to -1.0: {}", msg);
+                    }
+                }
+                F32::from(-1.0) // Should never be negative, so this is a clear error value.
             }
-            Err(e) => println!("Failed to read DHT22: {:?}\r", e),
-        }
-
-        // Get current timestamp
+        };
+        let moisture_per: F32 = match moisture.read(&mut adc1) {
+            Ok(value) => value.into(),
+            Err(e) => {
+                match e {
+                    components::error::ComponentError::ReadError(msg) => {
+                        println!("SoilMoisture ReadError, fallback to -1.0: {}", msg);
+                    }
+                    components::error::ComponentError::AdcConversionError(msg) => {
+                        println!("SoilMoisture AdcConversionError, fallback to -1.0: {}", msg);
+                    }
+                }
+                F32::from(-1.0) // Should never be negative, so this is a clear error value.
+            }
+        };
+        let (temp_c, humidity_per) = match dht.read() {
+            Ok(value) => value.into(),
+            Err(e) => {
+                match e {
+                    components::error::ComponentError::ReadError(msg) => {
+                        println!("SoilMoisture ReadError, fallback to -1.0: {}", msg);
+                    }
+                    components::error::ComponentError::AdcConversionError(msg) => {
+                        println!("SoilMoisture AdcConversionError, fallback to -1.0: {}", msg);
+                    }
+                }
+                (F32::from(-1.0), F32::from(-1.0)) // Should never be negative, so this is a clear error value.
+            }
+        };
 
         println!("-----------------------------\r");
-        println!("Light Level (Raw): {}\r", ldr_raw);
-        println!("Soil Moisture (Raw): {}\r", moisture_raw);
+        println!("Light Level {:.1}lux\r", ldr_lux);
+        println!("Soil Moisture {:.1}%\r", moisture_per);
         println!("Temperature: {:.1}°C\r", temp_c);
-        println!("Humidity: {:.1}%\r", humidity);
+        println!("Humidity: {:.1}%\r", humidity_per);
 
         delay.delay_millis(2000); // DHT22 minimum period
     }
