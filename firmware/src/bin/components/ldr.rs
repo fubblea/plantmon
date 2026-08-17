@@ -2,7 +2,6 @@ use esp_hal::{
     analog::adc::{AdcConfig, AdcPin, Attenuation},
     peripherals::{ADC1, GPIO5},
 };
-use esp_println::println;
 use micromath::F32;
 
 use crate::components::{Adc1Component, ComponentValue, error::ComponentError};
@@ -25,7 +24,6 @@ impl<'a> Adc1Component<'a, GPIO5<'a>> for Ldr<'a, GPIO5<'a>> {
 
     fn value_from_raw(&self, raw: u16) -> Result<ComponentValue, ComponentError> {
         // TODO: Do this properly
-        println!("LDR conversion not implemented yet, returning raw value");
         Ok(ComponentValue::F32(F32::from(raw as f32)))
     }
 }
