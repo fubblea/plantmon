@@ -83,6 +83,7 @@ nb = "1.1.0"
 ssd1306 = { version = "0.10.0", features = ["async"] }
 embedded-graphics = "0.8.2"
 embedded-dht-rs = { version = "0.5.0", features = ["dht22"] }
+thiserror = { version = "2.0.20", default-features = false }
 
 [dev-dependencies]
 embedded-test = { version = "0.7.1", features = [

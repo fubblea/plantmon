@@ -67,48 +67,23 @@ async fn main(spawner: Spawner) -> ! {
     println!("Sensors Configured! Starting main loop...\r");
 
     loop {
-        let ldr_lux: F32 = match ldr.read(&mut adc1) {
-            Ok(value) => value.into(),
-            Err(e) => {
-                match e {
-                    components::error::ComponentError::ReadError(msg) => {
-                        println!("LRD RearError, fallback to -1.0: {}", msg);
-                    }
-                    components::error::ComponentError::AdcConversionError(msg) => {
-                        println!("LRD AdcConversionError, fallback to -1.0: {}", msg);
-                    }
-                }
-                F32::from(-1.0) // Should never be negative, so this is a clear error value.
-            }
-        };
-        let moisture_per: F32 = match moisture.read(&mut adc1) {
-            Ok(value) => value.into(),
-            Err(e) => {
-                match e {
-                    components::error::ComponentError::ReadError(msg) => {
-                        println!("SoilMoisture ReadError, fallback to -1.0: {}", msg);
-                    }
-                    components::error::ComponentError::AdcConversionError(msg) => {
-                        println!("SoilMoisture AdcConversionError, fallback to -1.0: {}", msg);
-                    }
-                }
-                F32::from(-1.0) // Should never be negative, so this is a clear error value.
-            }
-        };
-        let (temp_c, humidity_per) = match dht.read() {
-            Ok(value) => value.into(),
-            Err(e) => {
-                match e {
-                    components::error::ComponentError::ReadError(msg) => {
-                        println!("SoilMoisture ReadError, fallback to -1.0: {}", msg);
-                    }
-                    components::error::ComponentError::AdcConversionError(msg) => {
-                        println!("SoilMoisture AdcConversionError, fallback to -1.0: {}", msg);
-                    }
-                }
-                (F32::from(-1.0), F32::from(-1.0)) // Should never be negative, so this is a clear error value.
-            }
-        };
+        let ldr_lux: F32 = ldr
+            .read(&mut adc1)
+            .and_then(|raw| raw.try_into())
+            .inspect_err(|e| println!("Failed to read from LDR sensor: {}", e))
+            .unwrap_or(F32::from(-1.0)); // Should never be negative, so this is a clear error value.
+
+        let moisture_per: F32 = moisture
+            .read(&mut adc1)
+            .and_then(|raw| raw.try_into())
+            .inspect_err(|e| println!("Failed to read from Soil Moisture sensor: {}", e))
+            .unwrap_or(F32::from(-1.0)); // Should never be negative, so this is a clear error value.
+
+        let (temp_c, humidity_per) = dht
+            .read()
+            .and_then(|raw| raw.try_into())
+            .inspect_err(|e| println!("Failed to read from DHT22 sensor: {}", e))
+            .unwrap_or((F32::from(-1.0), F32::from(-1.0))); // Should never be negative, so this is a clear error value.
 
         println!("-----------------------------\r");
         println!("Light Level {:.1}lux\r", ldr_lux);

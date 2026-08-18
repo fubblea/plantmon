@@ -3,6 +3,7 @@ pub(crate) mod error;
 pub(crate) mod ldr;
 pub(crate) mod soil;
 
+use crate::alloc::string::ToString;
 use alloc::format;
 use esp_hal::{
     Blocking,
@@ -19,24 +20,30 @@ pub(crate) enum ComponentValue {
     F32Tuple(F32, F32),
 }
 
-impl From<ComponentValue> for F32 {
-    fn from(val: ComponentValue) -> Self {
-        match val {
-            ComponentValue::F32(value) => value,
-            ComponentValue::F32Tuple(_, _) => {
-                panic!("Cannot convert F32Tuple to F32 directly.")
-            }
+impl TryFrom<ComponentValue> for F32 {
+    type Error = ComponentError;
+
+    fn try_from(value: ComponentValue) -> Result<Self, Self::Error> {
+        match value {
+            ComponentValue::F32(value) => Ok(value),
+            ComponentValue::F32Tuple(_, _) => Err(ComponentError::Conversion(
+                "f32".to_string(),
+                "(f32, f32)".to_string(),
+            )),
         }
     }
 }
 
-impl From<ComponentValue> for (F32, F32) {
-    fn from(val: ComponentValue) -> Self {
-        match val {
-            ComponentValue::F32(_) => {
-                panic!("Cannot convert F32 to (F32, F32) directly.")
-            }
-            ComponentValue::F32Tuple(value1, value2) => (value1, value2),
+impl TryFrom<ComponentValue> for (F32, F32) {
+    type Error = ComponentError;
+
+    fn try_from(value: ComponentValue) -> Result<Self, Self::Error> {
+        match value {
+            ComponentValue::F32(_) => Err(ComponentError::Conversion(
+                "f32".to_string(),
+                "(f32, f32)".to_string(),
+            )),
+            ComponentValue::F32Tuple(value1, value2) => Ok((value1, value2)),
         }
     }
 }
@@ -56,7 +63,7 @@ pub(crate) trait Adc1Component<'a, Pin: esp_hal::gpio::Pin + esp_hal::analog::ad
     ) -> Result<ComponentValue, error::ComponentError> {
         match nb::block!(adc1.read_oneshot(self.get_pin())) {
             Ok(value) => Ok(self.value_from_raw(value)?),
-            Err(e) => Err(ComponentError::ReadError(format!("{:?}", e))),
+            Err(e) => Err(ComponentError::Read(format!("{:?}", e))),
         }
     }
 }

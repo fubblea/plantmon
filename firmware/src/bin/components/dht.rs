@@ -33,7 +33,7 @@ impl<'a> GpioComponent<'a, GPIO18<'a>> for Dht<'a> {
                 reading.temperature.into(), // Should be in Celsius
                 reading.humidity.into(),    // Should be in percentage
             )),
-            Err(e) => Err(ComponentError::ReadError(format!("{:?}", e))),
+            Err(e) => Err(ComponentError::Read(format!("{:?}", e))),
         }
     }
 }
