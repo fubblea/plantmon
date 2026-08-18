@@ -1,3 +1,5 @@
+use std::fs;
+
 fn main() {
     linker_be_nice();
     println!("cargo:rustc-link-arg-tests=-Tembedded-test.x");
@@ -69,4 +71,22 @@ fn linker_be_nice() {
         "cargo:rustc-link-arg=--error-handling-script={}",
         std::env::current_exe().unwrap().display()
     );
+
+    // Read the .env file and set environment variables for the build
+    println!("cargo:rerun-if-changed=.env");
+
+    if let Ok(contents) = fs::read_to_string(".env") {
+        for line in contents.lines() {
+            // Ignore comments and empty lines
+            if line.trim().starts_with('#') || line.trim().is_empty() {
+                continue;
+            }
+            // Parse KEY=VALUE
+            if let Some((key, value)) = line.split_once('=') {
+                let clean_val = value.trim().trim_matches('"').trim_matches('\'');
+                // 3. Export to the Rust compiler
+                println!("cargo:rustc-env={}={}", key.trim(), clean_val);
+            }
+        }
+    }
 }
