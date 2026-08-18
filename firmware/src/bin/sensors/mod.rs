@@ -2,6 +2,7 @@ pub(crate) mod dht;
 pub(crate) mod error;
 pub(crate) mod ldr;
 pub(crate) mod soil;
+pub(crate) mod tasks;
 
 use crate::alloc::string::ToString;
 use alloc::format;
@@ -13,7 +14,7 @@ use esp_hal::{
 };
 use micromath::F32;
 
-use crate::components::error::ComponentError;
+use crate::sensors::error::ComponentError;
 
 pub(crate) enum ComponentValue {
     F32(F32),

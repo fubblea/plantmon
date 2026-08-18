@@ -3,8 +3,8 @@ use embedded_dht_rs::dht22::Dht22;
 use esp_hal::gpio::{DriveMode, Flex, InputConfig, OutputConfig, Pull};
 use esp_hal::{delay::Delay, peripherals::GPIO18};
 
-use crate::components::error::ComponentError;
-use crate::components::{ComponentValue, GpioComponent};
+use crate::sensors::error::ComponentError;
+use crate::sensors::{ComponentValue, GpioComponent};
 
 pub(crate) struct Dht<'a> {
     dht22: Dht22<Flex<'a>, Delay>,
