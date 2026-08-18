@@ -49,15 +49,15 @@ impl TryFrom<ComponentValue> for (F32, F32) {
 }
 
 pub(crate) trait GpioComponent<'a, Pin: esp_hal::gpio::Pin> {
-    fn from_pin_and_delay(pin: Pin, delay: &'a mut Delay) -> Self;
-    fn read(&mut self) -> Result<ComponentValue, error::ComponentError>;
+    fn from_pin_and_delay(pin: Pin, delay: Delay) -> Self;
+    async fn read(&mut self) -> Result<ComponentValue, error::ComponentError>;
 }
 
 pub(crate) trait Adc1Component<'a, Pin: esp_hal::gpio::Pin + esp_hal::analog::adc::AdcChannel> {
     fn from_pin_and_adc1(pin: Pin, adc1_config: &mut AdcConfig<ADC1<'a>>) -> Self;
     fn get_pin(&mut self) -> &mut AdcPin<Pin, ADC1<'a>>;
     fn value_from_raw(&self, raw: u16) -> Result<ComponentValue, ComponentError>;
-    fn read(
+    async fn read(
         &mut self,
         adc1: &mut Adc<'a, ADC1<'a>, Blocking>,
     ) -> Result<ComponentValue, error::ComponentError> {

@@ -7,11 +7,11 @@ use crate::components::error::ComponentError;
 use crate::components::{ComponentValue, GpioComponent};
 
 pub(crate) struct Dht<'a> {
-    dht22: Dht22<Flex<'a>, &'a mut Delay>,
+    dht22: Dht22<Flex<'a>, Delay>,
 }
 
 impl<'a> GpioComponent<'a, GPIO18<'a>> for Dht<'a> {
-    fn from_pin_and_delay(pin: GPIO18<'a>, delay: &'a mut Delay) -> Self {
+    fn from_pin_and_delay(pin: GPIO18<'a>, delay: Delay) -> Self {
         let mut dht_pin = Flex::new(pin);
         dht_pin.apply_output_config(
             &OutputConfig::default()
@@ -27,7 +27,7 @@ impl<'a> GpioComponent<'a, GPIO18<'a>> for Dht<'a> {
         Self { dht22 }
     }
 
-    fn read(&mut self) -> Result<ComponentValue, ComponentError> {
+    async fn read(&mut self) -> Result<ComponentValue, ComponentError> {
         match self.dht22.read() {
             Ok(reading) => Ok(ComponentValue::F32Tuple(
                 reading.temperature.into(), // Should be in Celsius
